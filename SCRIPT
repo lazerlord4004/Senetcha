@@ -1,1 +1,122 @@
+------------------------------------------------
+-- COMBAT ESP SYSTEM (LEGIT GAME DESIGN VERSION)
+------------------------------------------------
+local espEnabled = false
+local espObjects = {}
 
+local function createESP(plr, char)
+	if plr == player then return end
+	if not espEnabled then return end
+
+	-- cleanup old
+	if espObjects[plr] then
+		espObjects[plr].highlight:Destroy()
+		if espObjects[plr].billboard then
+			espObjects[plr].billboard:Destroy()
+		end
+	end
+
+	local head = char:FindFirstChild("Head")
+	local hum = char:FindFirstChild("Humanoid")
+	if not head or not hum then return end
+
+	------------------------------------------------
+	-- BOX ESP (Highlight)
+	------------------------------------------------
+	local highlight = Instance.new("Highlight")
+	highlight.FillTransparency = 1 -- clean box outline
+	highlight.OutlineTransparency = 0
+	highlight.OutlineColor = Color3.fromRGB(255, 0, 255)
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.Parent = char
+
+	------------------------------------------------
+	-- NAME + HP + DISTANCE UI
+	------------------------------------------------
+	local billboard = Instance.new("BillboardGui")
+	billboard.Size = UDim2.new(0, 150, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Parent = head
+
+	local text = Instance.new("TextLabel")
+	text.Size = UDim2.new(1,0,1,0)
+	text.BackgroundTransparency = 1
+	text.TextColor3 = Color3.fromRGB(255,255,255)
+	text.TextStrokeTransparency = 0
+	text.Font = Enum.Font.GothamBold
+	text.TextSize = 12
+	text.Parent = billboard
+
+	------------------------------------------------
+	-- UPDATE LOOP
+	------------------------------------------------
+	local conn
+	conn = game:GetService("RunService").RenderStepped:Connect(function()
+		if not espEnabled or not char or not hum or hum.Health <= 0 then
+			if conn then conn:Disconnect() end
+			return
+		end
+
+		local dist = math.floor((char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude)
+
+		text.Text =
+			plr.Name ..
+			"\nHP: " .. math.floor(hum.Health) ..
+			"\nDist: " .. dist
+	end)
+
+	espObjects[plr] = {
+		highlight = highlight,
+		billboard = billboard,
+		connection = conn
+	}
+end
+
+------------------------------------------------
+-- CLEAN REMOVE
+------------------------------------------------
+local function clearESP()
+	for _, data in pairs(espObjects) do
+		if data.highlight then data.highlight:Destroy() end
+		if data.billboard then data.billboard:Destroy() end
+		if data.connection then data.connection:Disconnect() end
+	end
+	table.clear(espObjects)
+end
+
+------------------------------------------------
+-- BUTTON TOGGLE (REPLACE YOUR OLD ONE)
+------------------------------------------------
+espBtn.MouseButton1Click:Connect(function()
+	espEnabled = not espEnabled
+
+	if espEnabled then
+		for _, p in ipairs(game.Players:GetPlayers()) do
+			if p.Character then
+				createESP(p, p.Character)
+			end
+
+			p.CharacterAdded:Connect(function(c)
+				if espEnabled then
+					task.wait(0.5)
+					createESP(p, c)
+				end
+			end)
+		end
+	else
+		clearESP()
+	end
+end)
+
+------------------------------------------------
+-- AUTO NEW PLAYERS
+------------------------------------------------
+game.Players.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function(c)
+		if espEnabled then
+			task.wait(0.5)
+			createESP(p, c)
+		end
+	end)
+end)
