@@ -1,605 +1,114 @@
-```lua
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-
-local player = Players.LocalPlayer
-
 ------------------------------------------------
--- CHARACTER
+-- TRUE BOX ESP (BOX HANDLE ADORNMENT)
 ------------------------------------------------
-
-local character
-local humanoid
-local rootPart
-
-local function loadCharacter(char)
-	character = char
-	humanoid = char:WaitForChild("Humanoid")
-	rootPart = char:WaitForChild("HumanoidRootPart")
-end
-
-if player.Character then
-	loadCharacter(player.Character)
-else
-	loadCharacter(player.CharacterAdded:Wait())
-end
-
-player.CharacterAdded:Connect(function(char)
-	loadCharacter(char)
-
-	task.wait(0.2)
-
-	if speedEnabled then
-		humanoid.WalkSpeed = currentSpeed
-	end
-
-	if flying then
-		stopFly()
-		flying = false
-		flyButton.Text = "FLY: OFF"
-	end
-end)
-
-------------------------------------------------
--- SETTINGS
-------------------------------------------------
-
-local speedEnabled = false
-local currentSpeed = 16
-local minSpeed = 16
-local maxSpeed = 150
-
-local flying = false
-local flySpeed = 70
-local flyVelocity = nil
-
 local espEnabled = false
 local espObjects = {}
 
-------------------------------------------------
--- GUI
-------------------------------------------------
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "Senetcha"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = true
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local main = Instance.new("Frame")
-main.Name = "Main"
-main.Size = UDim2.new(0, 300, 0, 390)
-main.Position = UDim2.new(0, 40, 0.5, -195)
-main.BackgroundColor3 = Color3.fromRGB(17, 17, 20)
-main.BorderSizePixel = 0
-main.Active = true
-main.Draggable = true
-main.Parent = gui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = main
-
-------------------------------------------------
--- TITLE
-------------------------------------------------
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 50)
-title.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-title.BorderSizePixel = 0
-title.Text = "SENETCHA"
-title.TextColor3 = Color3.fromRGB(255, 80, 220)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 20
-title.Parent = main
-
-local titleCorner = Instance.new("UICorner")
-titleCorner.CornerRadius = UDim.new(0, 10)
-titleCorner.Parent = title
-
-local subtitle = Instance.new("TextLabel")
-subtitle.Size = UDim2.new(1, -20, 0, 20)
-subtitle.Position = UDim2.new(0, 10, 0, 52)
-subtitle.BackgroundTransparency = 1
-subtitle.Text = "LOCK HOOD CONTROL PANEL"
-subtitle.TextColor3 = Color3.fromRGB(130, 130, 140)
-subtitle.Font = Enum.Font.Gotham
-subtitle.TextSize = 11
-subtitle.Parent = main
-
-------------------------------------------------
--- BUTTON CREATOR
-------------------------------------------------
-
-local function createButton(text, y)
-	local button = Instance.new("TextButton")
-
-	button.Size = UDim2.new(1, -30, 0, 38)
-	button.Position = UDim2.new(0, 15, 0, y)
-
-	button.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-	button.BorderSizePixel = 0
-
-	button.Text = text
-	button.TextColor3 = Color3.fromRGB(235, 235, 240)
-	button.Font = Enum.Font.GothamBold
-	button.TextSize = 13
-
-	button.AutoButtonColor = true
-	button.Parent = main
-
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 7)
-	c.Parent = button
-
-	return button
-end
-
-------------------------------------------------
--- SPEED TOGGLE
-------------------------------------------------
-
-local speedButton = createButton("SPEED: OFF", 85)
-
-speedButton.MouseButton1Click:Connect(function()
-	speedEnabled = not speedEnabled
-
-	if speedEnabled then
-		speedButton.Text = "SPEED: ON"
-
-		if humanoid then
-			humanoid.WalkSpeed = currentSpeed
-		end
-	else
-		speedButton.Text = "SPEED: OFF"
-
-		if humanoid then
-			humanoid.WalkSpeed = 16
-		end
-	end
-end)
-
-------------------------------------------------
--- SPEED LABEL
-------------------------------------------------
-
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(1, -30, 0, 25)
-speedLabel.Position = UDim2.new(0, 15, 0, 130)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Text = "Speed: 16"
-speedLabel.TextColor3 = Color3.fromRGB(230, 230, 235)
-speedLabel.Font = Enum.Font.GothamBold
-speedLabel.TextSize = 13
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Parent = main
-
-------------------------------------------------
--- SPEED SLIDER
-------------------------------------------------
-
-local slider = Instance.new("Frame")
-slider.Size = UDim2.new(1, -30, 0, 10)
-slider.Position = UDim2.new(0, 15, 0, 160)
-slider.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
-slider.BorderSizePixel = 0
-slider.Parent = main
-
-local sliderCorner = Instance.new("UICorner")
-sliderCorner.CornerRadius = UDim.new(1, 0)
-sliderCorner.Parent = slider
-
-local fill = Instance.new("Frame")
-fill.Size = UDim2.new(0, 0, 1, 0)
-fill.BackgroundColor3 = Color3.fromRGB(255, 80, 220)
-fill.BorderSizePixel = 0
-fill.Parent = slider
-
-local fillCorner = Instance.new("UICorner")
-fillCorner.CornerRadius = UDim.new(1, 0)
-fillCorner.Parent = fill
-
-local knob = Instance.new("Frame")
-knob.Size = UDim2.new(0, 16, 0, 16)
-knob.Position = UDim2.new(0, -8, 0.5, -8)
-knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-knob.BorderSizePixel = 0
-knob.Parent = slider
-
-local knobCorner = Instance.new("UICorner")
-knobCorner.CornerRadius = UDim.new(1, 0)
-knobCorner.Parent = knob
-
-local sliderDragging = false
-
-local function updateSlider(mouseX)
-	local relative = math.clamp(
-		(mouseX - slider.AbsolutePosition.X) / slider.AbsoluteSize.X,
-		0,
-		1
-	)
-
-	fill.Size = UDim2.new(relative, 0, 1, 0)
-	knob.Position = UDim2.new(relative, -8, 0.5, -8)
-
-	currentSpeed = math.floor(
-		minSpeed + ((maxSpeed - minSpeed) * relative)
-	)
-
-	speedLabel.Text = "Speed: " .. currentSpeed
-
-	if speedEnabled and humanoid then
-		humanoid.WalkSpeed = currentSpeed
-	end
-end
-
-slider.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		sliderDragging = true
-		updateSlider(input.Position.X)
-	end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-	if sliderDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-		updateSlider(input.Position.X)
-	end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		sliderDragging = false
-	end
-end)
-
-------------------------------------------------
--- FLY
-------------------------------------------------
-
-local flyButton = createButton("FLY: OFF", 190)
-
-local flyConnection
-
-function stopFly()
-	if flyConnection then
-		flyConnection:Disconnect()
-		flyConnection = nil
-	end
-
-	if flyVelocity then
-		flyVelocity:Destroy()
-		flyVelocity = nil
-	end
-end
-
-function startFly()
-	if not rootPart then
-		return
-	end
-
-	stopFly()
-
-	flyVelocity = Instance.new("BodyVelocity")
-	flyVelocity.Name = "SenetchaFlyVelocity"
-	flyVelocity.MaxForce = Vector3.new(
-		math.huge,
-		math.huge,
-		math.huge
-	)
-	flyVelocity.Velocity = Vector3.zero
-	flyVelocity.Parent = rootPart
-
-	flyConnection = RunService.RenderStepped:Connect(function()
-		if not flying then
-			return
-		end
-
-		if not rootPart or not rootPart.Parent then
-			return
-		end
-
-		local camera = workspace.CurrentCamera
-		local direction = Vector3.zero
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.W) then
-			direction += camera.CFrame.LookVector
-		end
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.S) then
-			direction -= camera.CFrame.LookVector
-		end
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.A) then
-			direction -= camera.CFrame.RightVector
-		end
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.D) then
-			direction += camera.CFrame.RightVector
-		end
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
-			direction += Vector3.new(0, 1, 0)
-		end
-
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
-			direction -= Vector3.new(0, 1, 0)
-		end
-
-		if direction.Magnitude > 0 then
-			direction = direction.Unit
-		end
-
-		flyVelocity.Velocity = direction * flySpeed
-	end)
-end
-
-flyButton.MouseButton1Click:Connect(function()
-	flying = not flying
-
-	if flying then
-		flyButton.Text = "FLY: ON"
-		startFly()
-	else
-		flyButton.Text = "FLY: OFF"
-		stopFly()
-	end
-end)
-
-------------------------------------------------
--- BOX ESP
-------------------------------------------------
-
-local espButton = createButton("ESP: OFF", 235)
-
-local function removeESP(plr)
-	local data = espObjects[plr]
-
-	if not data then
-		return
-	end
-
-	if data.box then
-		data.box:Destroy()
-	end
-
-	if data.billboard then
-		data.billboard:Destroy()
-	end
-
-	if data.connection then
-		data.connection:Disconnect()
-	end
-
-	espObjects[plr] = nil
-end
-
 local function clearESP()
-	for plr in pairs(espObjects) do
-		removeESP(plr)
+	for _,data in pairs(espObjects) do
+		if data.box then data.box:Destroy() end
+		if data.name then data.name:Destroy() end
 	end
+	table.clear(espObjects)
 end
 
-local function createBoxESP(plr)
-	if plr == player then
-		return
-	end
+local function addESP(plr)
+	if plr == player then return end
 
-	if not espEnabled then
-		return
-	end
+	local function apply(char)
+		if not espEnabled then return end
 
-	local char = plr.Character
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChild("Humanoid")
+		if not hrp or not hum then return end
 
-	if not char then
-		return
-	end
-
-	local targetRoot = char:FindFirstChild("HumanoidRootPart")
-	local targetHumanoid = char:FindFirstChildOfClass("Humanoid")
-
-	if not targetRoot or not targetHumanoid then
-		return
-	end
-
-	removeESP(plr)
-
-	------------------------------------------------
-	-- ACTUAL BOX
-	------------------------------------------------
-
-	local box = Instance.new("BoxHandleAdornment")
-
-	box.Name = "SenetchaBox"
-	box.Adornee = targetRoot
-
-	-- Constant physical size
-	box.Size = Vector3.new(4, 6, 2)
-
-	box.CFrame = CFrame.new(0, 0, 0)
-
-	box.Color3 = Color3.fromRGB(255, 0, 220)
-
-	box.Transparency = 0.35
-	box.AlwaysOnTop = true
-	box.ZIndex = 10
-
-	box.Parent = targetRoot
-
-	------------------------------------------------
-	-- NAME / HP / DISTANCE
-	------------------------------------------------
-
-	local billboard = Instance.new("BillboardGui")
-
-	billboard.Name = "SenetchaESPInfo"
-	billboard.Adornee = targetRoot
-	billboard.Size = UDim2.new(0, 180, 0, 50)
-	billboard.StudsOffset = Vector3.new(0, 4, 0)
-	billboard.AlwaysOnTop = true
-
-	billboard.Parent = targetRoot
-
-	local info = Instance.new("TextLabel")
-
-	info.Size = UDim2.new(1, 0, 1, 0)
-	info.BackgroundTransparency = 1
-
-	info.TextColor3 = Color3.fromRGB(255, 255, 255)
-	info.TextStrokeTransparency = 0
-
-	info.Font = Enum.Font.GothamBold
-	info.TextSize = 12
-
-	info.Parent = billboard
-
-	------------------------------------------------
-	-- UPDATE ESP
-	------------------------------------------------
-
-	local connection
-
-	connection = RunService.RenderStepped:Connect(function()
-		if not espEnabled then
-			removeESP(plr)
-			return
+		if espObjects[plr] then
+			clearESP()
 		end
 
-		if not plr.Parent then
-			removeESP(plr)
-			return
-		end
+		------------------------------------------------
+		-- 🔲 TRUE 3D BOX
+		------------------------------------------------
+		local box = Instance.new("BoxHandleAdornment")
+		box.Name = "SenetchaBox"
+		box.Adornee = hrp
+		box.AlwaysOnTop = true
+		box.ZIndex = 10
+		box.Size = Vector3.new(4, 6, 2)
+		box.Color3 = Color3.fromRGB(255, 0, 255)
+		box.Transparency = 0.3
+		box.Parent = hrp
 
-		if not char.Parent then
-			removeESP(plr)
-			return
-		end
+		------------------------------------------------
+		-- NAME + INFO
+		------------------------------------------------
+		local billboard = Instance.new("BillboardGui")
+		billboard.Size = UDim2.new(0,150,0,40)
+		billboard.StudsOffset = Vector3.new(0,3,0)
+		billboard.AlwaysOnTop = true
+		billboard.Parent = hrp
 
-		if not targetRoot.Parent or not targetHumanoid.Parent then
-			removeESP(plr)
-			return
-		end
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.new(1,0,1,0)
+		text.BackgroundTransparency = 1
+		text.TextColor3 = Color3.new(1,1,1)
+		text.TextStrokeTransparency = 0
+		text.Font = Enum.Font.GothamBold
+		text.TextSize = 12
+		text.Parent = billboard
 
-		local myRoot = rootPart
+		------------------------------------------------
+		-- UPDATE LOOP
+		------------------------------------------------
+		local conn
+		conn = RunService.RenderStepped:Connect(function()
+			if not espEnabled or not hrp or not hum then
+				if conn then conn:Disconnect() end
+				return
+			end
 
-		local distance = 0
+			local dist = math.floor((hrp.Position - player.Character.HumanoidRootPart.Position).Magnitude)
 
-		if myRoot and myRoot.Parent then
-			distance = math.floor(
-				(targetRoot.Position - myRoot.Position).Magnitude
-			)
-		end
-
-		info.Text =
-			plr.DisplayName ..
-			"\nHP: " ..
-			math.floor(targetHumanoid.Health) ..
-			" | " ..
-			distance ..
-			" studs"
-	end)
-
-	espObjects[plr] = {
-		box = box,
-		billboard = billboard,
-		connection = connection
-	}
-end
-
-------------------------------------------------
--- PLAYER SETUP
-------------------------------------------------
-
-local playerConnections = {}
-
-local function setupPlayer(plr)
-	if plr == player then
-		return
-	end
-
-	if playerConnections[plr] then
-		playerConnections[plr]:Disconnect()
-	end
-
-	playerConnections[plr] = plr.CharacterAdded:Connect(function()
-		task.wait(0.25)
-
-		if espEnabled then
-			createBoxESP(plr)
-		end
-	end)
-
-	if espEnabled and plr.Character then
-		task.spawn(function()
-			createBoxESP(plr)
+			text.Text =
+				plr.Name ..
+				"\nHP: " .. math.floor(hum.Health) ..
+				"\nDist: " .. dist
 		end)
+
+		espObjects[plr] = {
+			box = box,
+			name = billboard,
+			conn = conn
+		}
 	end
+
+	if plr.Character then
+		apply(plr.Character)
+	end
+
+	plr.CharacterAdded:Connect(function(c)
+		task.wait(0.2)
+		apply(c)
+	end)
 end
 
 ------------------------------------------------
--- ESP TOGGLE
+-- TOGGLE BUTTON (KEEP YOUR UI)
 ------------------------------------------------
-
-espButton.MouseButton1Click:Connect(function()
+espBtn.MouseButton1Click:Connect(function()
 	espEnabled = not espEnabled
 
 	if espEnabled then
-		espButton.Text = "ESP: ON"
-
-		for _, plr in ipairs(Players:GetPlayers()) do
-			setupPlayer(plr)
-			createBoxESP(plr)
+		for _,p in ipairs(Players:GetPlayers()) do
+			addESP(p)
 		end
 	else
-		espButton.Text = "ESP: OFF"
 		clearESP()
 	end
 end)
 
-------------------------------------------------
--- NEW PLAYERS
-------------------------------------------------
-
-Players.PlayerAdded:Connect(function(plr)
-	setupPlayer(plr)
-
+Players.PlayerAdded:Connect(function(p)
 	if espEnabled then
-		task.wait(0.25)
-		createBoxESP(plr)
+		addESP(p)
 	end
 end)
-
-------------------------------------------------
--- PLAYER LEAVES
-------------------------------------------------
-
-Players.PlayerRemoving:Connect(function(plr)
-	removeESP(plr)
-
-	if playerConnections[plr] then
-		playerConnections[plr]:Disconnect()
-		playerConnections[plr] = nil
-	end
-end)
-
-------------------------------------------------
--- SPEED ENFORCER
-------------------------------------------------
-
-RunService.RenderStepped:Connect(function()
-	if speedEnabled and humanoid then
-		if humanoid.WalkSpeed ~= currentSpeed then
-			humanoid.WalkSpeed = currentSpeed
-		end
-	end
-end)
-
-------------------------------------------------
--- INITIAL PLAYERS
-------------------------------------------------
-
-for _, plr in ipairs(Players:GetPlayers()) do
-	setupPlayer(plr)
-end
-```
